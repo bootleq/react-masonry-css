@@ -46,6 +46,60 @@ const reCalculateColumnCountDebounce = (columnCountCallback, lastFrameRef) => {
   lastFrameRef.current = window.requestAnimationFrame(columnCountCallback);
 };
 
+const moveOddItem = (ctx) => {
+  const { itemsColumns, heights, refPropName } = ctx;
+
+  const [minCol, maxCol] = heights.reduce((acc, num, index, arr) => {
+    if (num < arr[acc[0]]) acc[0] = index;
+    if (num > arr[acc[1]]) acc[1] = index;
+    return acc;
+  }, [0, 0]);
+
+  const maxColItems = itemsColumns[maxCol];
+  const oddHeight = maxColItems[maxColItems.length - 1].props[refPropName];
+
+  // Move item unless target column will become longest afterward
+  if (heights[minCol] + oddHeight < heights[maxCol]) {
+    const item = maxColItems.pop();
+    itemsColumns[minCol].push(item);
+    heights[maxCol] -= oddHeight;
+    heights[minCol] += oddHeight;
+  } else {
+    ctx.done = true;
+  }
+};
+
+const balanceColumns = (itemsColumns, refPropName) => {
+  const heights = itemsColumns.map(items => {
+    let sum = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      if (typeof items[i].props[refPropName] === 'number') {
+        sum += items[i].props[refPropName];
+      } else {
+        return -1;
+      }
+    }
+    return sum;
+  });
+
+  if (heights.some(h => h <= 0)) {
+    return itemsColumns; // fail following height, return untouched
+  }
+
+  const ctx = {
+    itemsColumns,
+    heights,
+    refPropName,
+    done: false
+  };
+
+  while (!ctx.done) {
+    moveOddItem(ctx);
+  }
+  return itemsColumns;
+};
+
 const itemsInColumns = (currentColumnCount, children) => {
   const itemsInColumns = new Array(currentColumnCount);
 
@@ -74,9 +128,15 @@ const renderColumns = (
   currentColumnCount,
   column,
   columnAttrs = {},
-  columnClassName
+  columnClassName,
+  itemHeightProp
 ) => {
   const childrenInColumns = itemsInColumns(currentColumnCount, children);
+
+  if (itemHeightProp) {
+    balanceColumns(childrenInColumns, itemHeightProp);
+  }
+
   const columnWidth = `${100 / childrenInColumns.length}%`;
   let className = columnClassName;
 
@@ -116,6 +176,8 @@ const Masonry = ({
   columnClassName = undefined, // optional, string
   children = undefined, // Any React children. Typically an array of JSX items
 
+  itemHeightProp = undefined, // optional, string
+
   // Custom attributes, however it is advised against
   // using these to prevent unintended issues and future conflicts
   // ...any other attribute, will be added to the container
@@ -141,6 +203,7 @@ const Masonry = ({
 
   const columnCountCallback = React.useCallback(() => {
     const columns = reCalculateColumnCount(breakpointCols);
+
     if (columnCount !== columns) {
       setColumnCount(columns);
     }
@@ -180,7 +243,8 @@ const Masonry = ({
         columnCount,
         column,
         columnAttrs,
-        columnClassName
+        columnClassName,
+        itemHeightProp
       )}
     </div>
   );

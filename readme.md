@@ -2,8 +2,31 @@
 
 - Take @paulcollett's PR [#83][pr83] which rework class component to **function component**.
 
-[pr83]: https://github.com/paulcollett/react-masonry-css/pull/83
+- Add prop `itemHeightProp` to hint Masonry about each item's height, to help balance columns, issue [#64][issue64].
 
+  Example:
+
+  ```jsx
+  items = items.map(function(item) {
+    return <div key={item.id} sampleProp={item.someKnownHeight}> ... </div>;
+  });
+
+  <Masonry
+    breakpointCols={3}
+    className="my-masonry-grid"
+    itemHeightProp="sampleProp"
+  >
+    {items}
+  </Masonry>
+  ```
+
+  - It's each item's responsibility to provide the prop, operation stops if any missing.
+  - The value is not the real element height, just a reference number for calculation, also there is no checking for its correctness.
+  - To do minimum mutation, this only moves bottommost item to another column's bottom, might repeat several items.
+
+
+[pr83]: https://github.com/paulcollett/react-masonry-css/pull/83
+[issue64]: https://github.com/paulcollett/react-masonry-css/issues/64
 
 ---
 
