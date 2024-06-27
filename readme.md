@@ -1,3 +1,13 @@
+# About this Fork
+
+- Take @paulcollett's PR [#83][pr83] which rework class component to **function component**.
+
+[pr83]: https://github.com/paulcollett/react-masonry-css/pull/83
+
+
+---
+
+
 A Masonry component leveraging CSS and native React rendering, for fast, responsive masonry layouts
 
 ![image](https://user-images.githubusercontent.com/1904774/30821174-491e9670-a1d9-11e7-8b18-250d54858c4f.png)
